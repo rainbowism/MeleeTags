@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"errors"
+	"log"
 	"math"
 )
 
@@ -18,7 +19,7 @@ type Dolphin struct {
 
 // Read returns true if it read memory
 func (d *Dolphin) Read(address uint64) bool {
-	if ReadProcessMemoryN(d.process, address, d.buf, len(d.buf), &d.bytesRead); int(d.bytesRead) != len(d.buf) {
+	if ReadProcessMemoryN(d.process, address+d.baseAddress, d.buf, len(d.buf), &d.bytesRead); int(d.bytesRead) != len(d.buf) {
 		return false
 	}
 	return true
@@ -26,7 +27,7 @@ func (d *Dolphin) Read(address uint64) bool {
 
 // ReadBuf returns true if it read memory, as well as the buffer
 func (d *Dolphin) ReadBuf(address uint64) (bool, []byte) {
-	if ReadProcessMemoryN(d.process, address, d.buf, len(d.buf), &d.bytesRead); d.bytesRead == 0 {
+	if ReadProcessMemoryN(d.process, address+d.baseAddress, d.buf, len(d.buf), &d.bytesRead); d.bytesRead == 0 {
 		return false, nil
 	}
 	return true, d.buf
@@ -34,7 +35,7 @@ func (d *Dolphin) ReadBuf(address uint64) (bool, []byte) {
 
 // ReadOffset returns true if it read memory
 func (d *Dolphin) ReadOffset(address, offset uint64) bool {
-	if ReadProcessMemoryN(d.process, address, d.buf, len(d.buf), &d.bytesRead); int(d.bytesRead) != len(d.buf) {
+	if ReadProcessMemoryN(d.process, address+d.baseAddress, d.buf, len(d.buf), &d.bytesRead); int(d.bytesRead) != len(d.buf) {
 		return false
 	}
 	if offset != noOffset {
@@ -47,33 +48,7 @@ func (d *Dolphin) ReadOffset(address, offset uint64) bool {
 
 // ReadBufOffset returns true if it read memory, as well as the buffer
 func (d *Dolphin) ReadBufOffset(address, offset uint64) (bool, []byte) {
-	if ReadProcessMemoryN(d.process, address, d.buf, len(d.buf), &d.bytesRead); d.bytesRead == 0 {
-		return false, nil
-	}
-	if offset != noOffset {
-		if ReadProcessMemoryN(d.process, binary.LittleEndian.Uint64(d.buf)+offset, d.buf, len(d.buf), &d.bytesRead); d.bytesRead == 0 {
-			return false, nil
-		}
-	}
-	return true, d.buf
-}
-
-// ReadBase returns true if it read memory
-func (d *Dolphin) ReadBase(address, offset uint64) bool {
-	if ReadProcessMemoryN(d.process, d.baseAddress+address, d.buf, len(d.buf), &d.bytesRead); int(d.bytesRead) != len(d.buf) {
-		return false
-	}
-	if offset != noOffset {
-		if ReadProcessMemoryN(d.process, binary.LittleEndian.Uint64(d.buf)+offset, d.buf, len(d.buf), &d.bytesRead); int(d.bytesRead) != len(d.buf) {
-			return false
-		}
-	}
-	return true
-}
-
-// ReadBaseBuf returns true if it read memory, as well as the buffer
-func (d *Dolphin) ReadBaseBuf(address, offset uint64) (bool, []byte) {
-	if ReadProcessMemoryN(d.process, d.baseAddress+address, d.buf, len(d.buf), &d.bytesRead); d.bytesRead == 0 {
+	if ReadProcessMemoryN(d.process, address+d.baseAddress, d.buf, len(d.buf), &d.bytesRead); d.bytesRead == 0 {
 		return false, nil
 	}
 	if offset != noOffset {
@@ -96,6 +71,7 @@ func NewDolphin() (*Dolphin, error) {
 	if dolphin, baseAddress = GetProgram("Dolphin.exe"); dolphin == 0 {
 		return nil, errors.New("Dolphin isn't running")
 	}
+	log.Printf("%x\n", baseAddress)
 	return &Dolphin{
 		process:     dolphin,
 		baseAddress: baseAddress,

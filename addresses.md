@@ -1,21 +1,18 @@
-Base Address - 0x80C45D5F
+Base Address - 0x80845D5F
   Player Offset - 4B0 * player slot
     Char 1 - +0
     Char 2 - +3
     Char 3 - +6
     Char 4 - +9
 
-Nametag In Use
-  Player 1 - 0x811986FB
-  Player 2 - 0x8119873B
-  Player 3 - 0x8119877B
-  Player 4 - 0x811987BB
+Nametag In Use - 0x80D9821B / 0x80D986FB
+  Player Offset - 40 * player slot
 
 Character Count
-  Player 1 - 0x80C45D37
-  Player 2 - 0x80C45EC3
-  Player 3 - 0x80C46373
-  Player 4 - 0x80C46823
+  Player 1 - 0x80845D37
+  Player 2 - 0x80845EC3
+  Player 3 - 0x80846373
+  Player 4 - 0x80846823
 
 Character count only uses the first bit.
   1 characters = 3

@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"time"
 )
 
@@ -79,34 +79,43 @@ func (melee *MeleeTags) Close() {
 }
 
 func (melee *MeleeTags) Update() (ok bool, err error) {
-	// Player 1
-	player1 := melee.ReadPlayer(0x80C45D37, 0x80C45D5F+(0x4B0*0))
+	player1 := melee.ReadPlayer(0x80D9821B+(0x40*0), 0x80D986FB+(0x40*0), 0x80845D37, 0x80845D5F+(0x4B0*0))
 	err = ioutil.WriteFile("player1.txt", []byte(player1), 0644)
 	if err != nil {
 		return false, err
 	}
-	player2 := melee.ReadPlayer(0x80C45EC3, 0x80C45D5F+(0x4B0*1))
+	player2 := melee.ReadPlayer(0x80D9821B+(0x40*1), 0x80D986FB+(0x40*1), 0x80845EC3, 0x80845D5F+(0x4B0*1))
 	err = ioutil.WriteFile("player2.txt", []byte(player2), 0644)
 	if err != nil {
 		return false, err
 	}
-	player3 := melee.ReadPlayer(0x80C46373, 0x80C45D5F+(0x4B0*2))
+	player3 := melee.ReadPlayer(0x80D9821B+(0x40*2), 0x80D986FB+(0x40*2), 0x80846373, 0x80845D5F+(0x4B0*2))
 	err = ioutil.WriteFile("player3.txt", []byte(player3), 0644)
 	if err != nil {
 		return false, err
 	}
-	player4 := melee.ReadPlayer(0x80C46823, 0x80C45D5F+(0x4B0*3))
+	player4 := melee.ReadPlayer(0x80D9821B+(0x40*3), 0x80D986FB+(0x40*3), 0x80846823, 0x80845D5F+(0x4B0*3))
 	err = ioutil.WriteFile("player4.txt", []byte(player4), 0644)
 	if err != nil {
 		return false, err
 	}
+	log.Println(player1, "|", player2, "|", player3, "|", player4)
 	return true, nil
 }
 
-func (melee *MeleeTags) ReadPlayer(charCount, base uint64) string {
+func (melee *MeleeTags) ReadPlayer(inUse1, inUse2, charCount, base uint64) string {
 	if melee.x64 {
+		inUse1 += 0x100000000
+		inUse2 += 0x100000000
 		charCount += 0x100000000
 		base += 0x100000000
+	}
+	melee.Dolphin.Read(inUse1)
+	nametagged1 := melee.Dolphin.buf[0]
+	melee.Dolphin.Read(inUse2)
+	nametagged2 := melee.Dolphin.buf[0]
+	if nametagged1 != 0x1 && nametagged2 != 0x01 {
+		return ""
 	}
 	melee.Dolphin.Read(charCount)
 	charNum := melee.Dolphin.buf[0] & 0xF
@@ -153,7 +162,7 @@ func (melee *MeleeTags) Run() {
 		select {
 		case <-ticker.C:
 			if ok, err = melee.Update(); !ok {
-				fmt.Println(err)
+				log.Fatal(err)
 				return
 			}
 		}
